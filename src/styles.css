@@ -1,0 +1,334 @@
+/*
+  android icons
+*/
+@font-face {
+  font-family: icons;
+  src: url("./res/gicons.ttf");
+}
+
+@font-face {
+  font-family: iconsfill;
+  src: url("./res/giconsfill.ttf");
+}
+
+.androidIcon {
+  font-family: icons;
+}
+
+.androidIconFill {
+  font-family: iconsfill;
+}
+
+/*
+  page css
+*/
+body, html {
+  color: white;
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-size: 18px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: rgb(19, 23, 27);
+}
+/* center and limited size */
+.previewContainer {
+  width: 800px;
+  height: 100%;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+/* alert/error */
+.alert, .fadingAlert, .error, .fadingError {
+  width: 100%;
+  max-width: 800px;
+  color: white;
+  margin: 0;
+  padding: 12px;
+  position: fixed;
+  left: 50%;
+  bottom: 10px;
+  transform: translateX(-50%);
+  border-radius: 4px;
+}
+
+.alert, .fadingAlert {
+  background-color: rgb(31, 36, 43);
+}
+
+.error, .fadingError {
+  background-color: rgb(255, 0, 0);
+}
+
+.error, .alert {
+  animation: fadeIn 150ms;
+}
+
+.fadingError, .fadingAlert {
+  animation: fadeOut 150ms;
+  animation-fill-mode: forwards;
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+}
+
+@keyframes fadeOut {
+  0% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.9);
+  }
+}
+
+/*
+  inputs and buttons
+*/
+input[type=text], textarea {
+  border: 2px solid rgb(50, 50, 50);
+  border-radius: 8px;
+  padding: 8px;
+  font-size: 18px;
+  background-color: transparent;
+  outline: none;
+  margin: 4px;
+  color: white;
+  width: 300px;
+}
+
+textarea {
+  resize: vertical;
+  font-family: Arial;
+  max-height: 80vh;
+  min-height: 21px;
+}
+
+input[type=text]:focus, textarea:focus {
+  border: 2px solid rgb(255, 0, 0);
+}
+
+button {
+  background-color: rgb(209, 0, 0);
+  border: 2px solid rgb(170, 0, 0);
+  border-radius: 8px;
+  padding: 8px;
+  font-size: 18px;
+  outline: none;
+  color: white;
+  cursor: pointer;
+  margin: 4px;
+  width: 320px;
+}
+
+button:hover {
+  background-color: rgb(230, 0, 0);
+}
+
+button:disabled {
+  background-color: rgb(60, 60, 60);
+  border: 2px solid rgb(50, 50, 50);
+  color: gray;
+}
+
+/*
+  html header
+*/
+.htmlHeader {
+  background-color: rgb(42, 48, 54);
+  padding: 20px;
+  display: inline-block;
+  width: calc(100% - 40px);
+  user-select: none;
+  position: fixed;
+}
+
+.htmlBack {
+  font-size: 28px;
+  margin: 0;
+  margin-left: calc(50% - 488px); /* 400px is half of the previewContainer width + 20px for good padding + 28px of this width */
+  float: left;
+  line-height: 28px;
+  cursor: pointer;
+}
+
+.htmlHasHeader {
+  margin-top: 68px;
+  height: calc(100% - 68px);
+}
+
+/*
+  html menu
+*/
+.htmlCover {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.htmlMenu {
+  position: absolute;
+  background-color: rgb(23, 27, 32);
+  border: 1px solid rgb(31, 36, 43);
+  border-radius: 8px;
+  padding: 2px;
+}
+
+.htmlMenuTitle {
+  margin: 4px;
+  font-size: 24px;
+}
+
+.htmlMenu .htmlMenuItem {
+  margin: 2px;
+  padding: 12px;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.htmlMenu .htmlMenuItem:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/*
+  html other
+*/
+.htmlSplitter {
+  border: none;
+  border-top: 1px solid rgb(31, 36, 43);
+}
+
+.htmlLink {
+  color: rgb(0, 162, 255);
+  margin: 0;
+  display: inline;
+  cursor: pointer;
+}
+
+/*
+  conversation item
+*/
+.conversation {
+  width: calc(100% - 80px);
+  margin: 10px;
+  min-height: 60px;
+  background-color: rgb(25, 29, 34);
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.conversation:hover {
+  background-color: rgb(31, 36, 43);
+}
+
+.conversation img {
+  float: left;
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.conversation .name {
+  display: inline-block;
+  margin: 0;
+  margin-left: 10px;
+  font-size: 24px;
+}
+
+.conversation .preview {
+  color: rgb(163, 163, 163);
+  margin: 0;
+  margin-left: 80px;
+  font-size: 21px;
+}
+
+/*
+  profile item
+*/
+.profile {
+  margin-left: 68px;
+  float: left;
+  height: 28px;
+  border-radius: 8px;
+  cursor: pointer;
+  user-select: none;
+  transform: translateY(-10px);
+}
+
+.profile img {
+  float: left;
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.profile .name {
+  display: inline-block;
+  margin: 0;
+  margin-left: 10px;
+  font-size: 22px;
+}
+
+.profile .seen {
+  color: rgb(163, 163, 163);
+  margin: 0;
+  margin-left: 58px;
+  font-size: 14px;
+}
+
+/*
+  messages
+*/
+.message {
+  clear: both;
+  border-radius: 12px;
+  margin: 10px;
+  padding: 10px;
+  max-width: 90%;
+  float: left;
+  background-color: rgb(31, 36, 43);
+}
+
+.message.me {
+  float: right;
+  background-color: rgb(13, 78, 96);
+}
+
+.message p {
+  margin: 0;
+}
+
+.message .time {
+  position: absolute;
+  padding: 0 4px;
+  margin-top: -2px;
+  border-radius: 24px;
+  left: 10px;
+  background-color: rgb(31, 36, 43);
+  user-select: none;
+  color: rgb(163, 163, 163);
+  font-size: 14px;
+}
+
+.message.me .time {
+  left: unset;
+  right: 10px;
+  background-color: rgb(13, 78, 96);
+}
