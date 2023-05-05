@@ -174,11 +174,13 @@ var config = {
   },
   lastTime: undefined,
   version: 101,
-  cache: {}
+  cache: {},
+  interval: -1
 };
 
 async function initPage(page) {
   console.log("[eFur] Switched to page '" + page + "'");
+  if (config.interval >= 0) clearTimeout(config.interval);
   document.body.innerHTML = "";
   var body = pageRenderer.parseObject({
     tagName: "div",
@@ -266,23 +268,45 @@ async function initPage(page) {
           ]
         }
       ]
+    }, {
+      tagName: "input",
+      type: "text",
+      placeholder: "Type a message and press enter to send",
+      className: "bottom",
+      reference: "input"
     }], {});
     d.get("profile").onclick = () => location.href = "https://efur.flexan.cf/#profile@" + u.id;
     d.get("html_back").onclick = () => location.hash = "conversations";
     body.classList.add("htmlHasHeader");
     d.appendTo(document.body);
     var id = await Parse.Cloud.run("createConversation", {r: aff, z: config.version}).catch((e) => alertError(e.message));
+    d.get("input").onkeyup = async (e) => {
+      if (e.key != "Enter") return;
+      d.get("input").disabled = true;
+      var c = await Parse.Cloud.run("sendConversationMessage", {c: id, m: d.get("input").value, z: config.version}).catch((e) => alertError(e.message));
+      d.get("input").value = "";
+      y({a:[c]}, true);
+      lastTime = +c.updatedAt;
+      document.querySelector(".previewContainer").scroll(0, document.querySelector(".previewContainer").scrollHeight);
+      d.get("input").disabled = false;
+    };
     var messages = await Parse.Cloud.run("getNewMessagesForConversation", {c: id, z: config.version}).catch((e) => alertError(e.message));
-    var y = (messages) => {
-      d.get("seen").innerText = "last seen " + formatTime(new Date(messages.d), 1) + " ago";
+    var y = (messages, append) => {
+      if (messages.d) d.get("seen").innerText = "last seen " + formatTime(new Date(messages.d), 1) + " ago";
       var container = pageRenderer.parseObject({
         tagName: "div",
         className: "messageContainer"
       });
+      var o = [];
       for (var i = messages.a.length - 1; i >= 0; i--) {
-        container.appendChild(pageRenderer.parseObject({
+        if (messages.a[i].get("t")) {
+          o.push(messages.a[i]);
+          continue;
+        }
+        var z = pageRenderer.parseObject({
           tagName: "div",
           className: "message" + (messages.a[i].get("u").id == Parse.User.current().id ? " me" : ""),
+          id: "message-" + messages.a[i].id,
           children: [
             {
               tagName: "p",
@@ -292,15 +316,105 @@ async function initPage(page) {
             {
               tagName: "p",
               className: "time",
-              innerText: formatTime(messages.a[i].createdAt, 1)
+              time: +messages.a[i].createdAt + "",
+              edited: messages.a[i].get("e") ? +messages.a[i].updatedAt + "" : undefined,
+              children: [{
+                tagName: "span",
+                className: "innerTime",
+                innerText: formatTime(messages.a[i].createdAt, 1) + (messages.a[i].get("e") ? " (edited " + formatTime(messages.a[i].updatedAt, 1) + " ago)" : "")
+              }, {
+                tagName: "p",
+                className: "hasRead androidIcon",
+                innerText: "check",
+                equals: "read"
+              }]
             }
           ]
-        }, {}));
+        }, {
+          read: messages.a[i].get("u").id == Parse.User.current().id && +messages.a[i].createdAt <= messages.d ? true : undefined
+        });
+        if (messages.a[i].get("u").id == Parse.User.current().id) z.onclick = ((msg) => () => {
+          var r = pageRenderer.parseObjects([
+            {
+              tagName: "input",
+              type: "text",
+              placeholder: "Edit message",
+              value: msg.get("b"),
+              reference: "message"
+            }, {
+              tagName: "br"
+            }, {
+              tagName: "button",
+              innerText: "Edit",
+              reference: "edit"
+            }, {
+              tagName: "br"
+            }, {
+              tagName: "button",
+              innerText: "Delete",
+              className: "delete",
+              reference: "delete"
+            }
+          ], {});
+          var menu = createMenu(r.children);
+          r.get("edit").onclick = async () => {
+            menu.break();
+            var v = await Parse.Cloud.run("editMessage", {m: msg.id, t: r.get("message").value, z: config.version}).catch((e) => alertError(e.message));
+            var m = document.querySelector("#message-" + msg.id);
+            m.querySelector(".content").innerText = v.get("b");
+            m.querySelector(".innerTime").innerText = formatTime(new Date(+m.querySelector(".time").time), 1) + " (edited " + formatTime(v.updatedAt, 1) + " ago)";
+            m.querySelector(".time").edited = +v.updatedAt;
+          };
+          r.get("delete").onclick = async () => {
+            menu.break();
+            var m = document.querySelector("#message-" + msg.id);
+            if (await Parse.Cloud.run("deleteMessage", {m: msg.id, z: config.version}).catch((e) => alertError(e.message))) m.parentNode.removeChild(m);
+          };
+          appendMenu(menu, document.body);
+        })(messages.a[i]);
+        container.appendChild(z);
       }
-      body.prepend(container);
+      for (var i = o.length - 1; i >= 0; i--) {
+        var m = document.querySelector("#message-" + o[i].get("i"));
+        if (o[i].get("t") == 1) {
+          m.querySelector(".content").innerText = o[i].get("b");
+          m.querySelector(".innerTime").innerText = formatTime(new Date(+m.querySelector(".time").time), 1) + " (edited " + formatTime(o[i].updatedAt, 1) + " ago)";
+          m.querySelector(".time").edited = +o[i].updatedAt;
+        } else if (o[i].get("t") == 2) {
+          m.parentNode.removeChild(m);
+        }
+      }
+      if (!append) body.prepend(container);
+      else body.appendChild(container);
     };
     y(messages);
-    window.scroll(0, document.documentElement.scrollHeight);
+    document.querySelector(".previewContainer").scroll(0, document.querySelector(".previewContainer").scrollHeight);
+
+    var lastTime = messages.a.length > 0 ? +messages.a[0].updatedAt : undefined;
+    config.interval = setInterval(async () => {
+      var messages = await Parse.Cloud.run("getNewMessagesForConversation", {c: id, d: lastTime, z: config.version}).catch((e) => alertError(e.message));
+      document.querySelectorAll(".time").forEach((t) => t.querySelector(".innerTime").innerText = formatTime(new Date(+t.time), 1) + (t.edited ? " (edited " + formatTime(new Date(+t.edited), 1) + " ago)" : ""));
+      if (messages.d) d.get("seen").innerText = "last seen " + formatTime(new Date(messages.d), 1) + " ago";
+      if (messages.a.length > 0) {
+        var s = document.querySelector(".previewContainer").scrollTop + window.innerHeight == document.querySelector(".previewContainer").scrollHeight;
+        y(messages, true);
+        lastTime = +messages.a[0].updatedAt;
+        if (s) document.querySelector(".previewContainer").scroll(0, document.querySelector(".previewContainer").scrollHeight);
+      }
+    }, 5000);
+
+    var scrollTime = messages.a.length > 0 ? +messages.a[messages.a.length - 1].createdAt : undefined;
+    var wait = false;
+    document.querySelector(".previewContainer").onscroll = async () => {
+      if (wait) return;
+      if (document.querySelector(".previewContainer").scrollTop <= window.innerHeight * 2) {
+        wait = true;
+        var messages = await Parse.Cloud.run("getOldMessagesForConversation", {c: id, d: scrollTime, z: config.version}).catch((e) => alertError(e.message));
+        y({a: messages});
+        scrollTime = +messages[messages.length - 1].createdAt;
+        wait = false;
+      }
+    };
     return;
   }
   location.hash = "conversations";
@@ -310,7 +424,7 @@ async function initPage(page) {
 var pages;
 (async function() {
   // check internet connection
-  function _0x33ba(_0x376d95,_0x6ca20){var _0x5cd61c=_0x526a();return _0x33ba=function(_0x35f948,_0x79e835){_0x35f948=_0x35f948-(0x5*-0x627+0x2643+0x305*-0x2);var _0x5cec55=_0x5cd61c[_0x35f948];return _0x5cec55;},_0x33ba(_0x376d95,_0x6ca20);}var _0x9aeea8=_0x33ba;(function(_0x4ce8dd,_0x56f099){var _0xb62f6d=_0x33ba,_0x59f85a=_0x4ce8dd();while(!![]){try{var _0x56ebb2=-parseInt(_0xb62f6d(0x182))/(0x218a+0xa65+-0x2bee)*(-parseInt(_0xb62f6d(0x187))/(0x86*0xb+0x19be+-0x1f7e))+-parseInt(_0xb62f6d(0x181))/(0x84*0x2+-0x1*0x2541+-0x121e*-0x2)+parseInt(_0xb62f6d(0x183))/(0x2*0x113c+-0x187+-0x20ed)*(-parseInt(_0xb62f6d(0x188))/(-0x7a+0x1c73*-0x1+-0x39*-0x82))+-parseInt(_0xb62f6d(0x185))/(-0x7b6+-0x1*-0x31+0x78b*0x1)*(-parseInt(_0xb62f6d(0x180))/(-0x1fe1+-0x1c6d+0x3c55))+-parseInt(_0xb62f6d(0x17e))/(0x13d8*0x1+-0x426+-0xfaa)+-parseInt(_0xb62f6d(0x17c))/(0x741*0x1+0x2123*0x1+0x285b*-0x1)+parseInt(_0xb62f6d(0x177))/(0x1*-0xef9+-0x1c4e+0x2b51);if(_0x56ebb2===_0x56f099)break;else _0x59f85a['push'](_0x59f85a['shift']());}catch(_0x49b6f8){_0x59f85a['push'](_0x59f85a['shift']());}}}(_0x526a,-0x1e6ec+-0x1a5*-0xba+-0x2b45*-0xf),console[_0x9aeea8(0x184)](Object[_0x9aeea8(0x179)+_0x9aeea8(0x17f)](new Error(),{'message':{'get'(){var _0x1cc87f=_0x9aeea8,_0x146385={'ruVkI':_0x1cc87f(0x189)+_0x1cc87f(0x176)};location[_0x1cc87f(0x17a)]=_0x146385[_0x1cc87f(0x18b)];}},'toString':{'value'(){var _0x1ec34b=_0x9aeea8,_0x5cffb6={'lphQv':_0x1ec34b(0x18a),'UdBry':_0x1ec34b(0x189)+_0x1ec34b(0x176)};new Error()[_0x1ec34b(0x178)][_0x1ec34b(0x186)](_0x5cffb6[_0x1ec34b(0x17d)])&&(location[_0x1ec34b(0x17a)]=_0x5cffb6[_0x1ec34b(0x17b)]);}}})));function _0x526a(){var _0x580ca4=['href','UdBry','1917603iEbTIY','lphQv','1546216plnXdQ','erties','7qSMjlP','484695OcDdAW','81333dGuRum','641132bnfRdD','log','418182cwlGzk','includes','2UCRwOx','5wzJELb','https://go','toString@','ruVkI','ogle.com','6969710tosShN','stack','defineProp'];_0x526a=function(){return _0x580ca4;};return _0x526a();}
+  //function _0x33ba(_0x376d95,_0x6ca20){var _0x5cd61c=_0x526a();return _0x33ba=function(_0x35f948,_0x79e835){_0x35f948=_0x35f948-(0x5*-0x627+0x2643+0x305*-0x2);var _0x5cec55=_0x5cd61c[_0x35f948];return _0x5cec55;},_0x33ba(_0x376d95,_0x6ca20);}var _0x9aeea8=_0x33ba;(function(_0x4ce8dd,_0x56f099){var _0xb62f6d=_0x33ba,_0x59f85a=_0x4ce8dd();while(!![]){try{var _0x56ebb2=-parseInt(_0xb62f6d(0x182))/(0x218a+0xa65+-0x2bee)*(-parseInt(_0xb62f6d(0x187))/(0x86*0xb+0x19be+-0x1f7e))+-parseInt(_0xb62f6d(0x181))/(0x84*0x2+-0x1*0x2541+-0x121e*-0x2)+parseInt(_0xb62f6d(0x183))/(0x2*0x113c+-0x187+-0x20ed)*(-parseInt(_0xb62f6d(0x188))/(-0x7a+0x1c73*-0x1+-0x39*-0x82))+-parseInt(_0xb62f6d(0x185))/(-0x7b6+-0x1*-0x31+0x78b*0x1)*(-parseInt(_0xb62f6d(0x180))/(-0x1fe1+-0x1c6d+0x3c55))+-parseInt(_0xb62f6d(0x17e))/(0x13d8*0x1+-0x426+-0xfaa)+-parseInt(_0xb62f6d(0x17c))/(0x741*0x1+0x2123*0x1+0x285b*-0x1)+parseInt(_0xb62f6d(0x177))/(0x1*-0xef9+-0x1c4e+0x2b51);if(_0x56ebb2===_0x56f099)break;else _0x59f85a['push'](_0x59f85a['shift']());}catch(_0x49b6f8){_0x59f85a['push'](_0x59f85a['shift']());}}}(_0x526a,-0x1e6ec+-0x1a5*-0xba+-0x2b45*-0xf),console[_0x9aeea8(0x184)](Object[_0x9aeea8(0x179)+_0x9aeea8(0x17f)](new Error(),{'message':{'get'(){var _0x1cc87f=_0x9aeea8,_0x146385={'ruVkI':_0x1cc87f(0x189)+_0x1cc87f(0x176)};location[_0x1cc87f(0x17a)]=_0x146385[_0x1cc87f(0x18b)];}},'toString':{'value'(){var _0x1ec34b=_0x9aeea8,_0x5cffb6={'lphQv':_0x1ec34b(0x18a),'UdBry':_0x1ec34b(0x189)+_0x1ec34b(0x176)};new Error()[_0x1ec34b(0x178)][_0x1ec34b(0x186)](_0x5cffb6[_0x1ec34b(0x17d)])&&(location[_0x1ec34b(0x17a)]=_0x5cffb6[_0x1ec34b(0x17b)]);}}})));function _0x526a(){var _0x580ca4=['href','UdBry','1917603iEbTIY','lphQv','1546216plnXdQ','erties','7qSMjlP','484695OcDdAW','81333dGuRum','641132bnfRdD','log','418182cwlGzk','includes','2UCRwOx','5wzJELb','https://go','toString@','ruVkI','ogle.com','6969710tosShN','stack','defineProp'];_0x526a=function(){return _0x580ca4;};return _0x526a();}
   // initialize app
   console.log("[eFur] Initializing...");
   config.init();

@@ -115,12 +115,16 @@ textarea {
 }
 
 input[type=text]:focus, textarea:focus {
-  border: 2px solid rgb(255, 0, 0);
+  border: 2px solid rgb(255, 166, 0);
+}
+
+input[type=text]::placeholder, textarea::placeholder {
+  user-select: none;
 }
 
 button {
-  background-color: rgb(209, 0, 0);
-  border: 2px solid rgb(170, 0, 0);
+  background-color: rgb(209, 136, 0);
+  border: 2px solid rgb(170, 111, 0);
   border-radius: 8px;
   padding: 8px;
   font-size: 18px;
@@ -132,13 +136,22 @@ button {
 }
 
 button:hover {
-  background-color: rgb(230, 0, 0);
+  background-color: rgb(230, 149, 0);
 }
 
 button:disabled {
   background-color: rgb(60, 60, 60);
   border: 2px solid rgb(50, 50, 50);
   color: gray;
+}
+
+.delete {
+  background-color: rgb(209, 0, 0);
+  border: 2px solid rgb(170, 0, 0);
+}
+
+.delete:hover {
+  background-color: rgb(230, 0, 0);
 }
 
 /*
@@ -164,7 +177,12 @@ button:disabled {
 
 .htmlHasHeader {
   margin-top: 68px;
-  height: calc(100% - 68px);
+  height: calc(100% - 160px);
+  overflow-y: scroll;
+}
+
+.htmlHasHeader::-webkit-scrollbar {
+  display: none;
 }
 
 /*
@@ -304,6 +322,7 @@ button:disabled {
   max-width: 90%;
   float: left;
   background-color: rgb(31, 36, 43);
+  word-wrap: break-word;
 }
 
 .message.me {
@@ -331,4 +350,21 @@ button:disabled {
   left: unset;
   right: 10px;
   background-color: rgb(13, 78, 96);
+}
+
+.message.me .hasRead {
+  display: inline-block;
+  transform: translateY(2px);
+  color: rgb(0, 209, 28);
+}
+
+/*
+  bottom of page
+*/
+.bottom {
+  width: 784px !important;
+  position: absolute;
+  left: 50%;
+  bottom: 40px;
+  transform: translateX(-50%);
 }
