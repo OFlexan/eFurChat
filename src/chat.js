@@ -444,7 +444,7 @@ var pages;
 
   // check if user is logged in
   if (Parse.User.current() == null) {
-    location.href = "https://efur.flexan.cf/login?redirect=chat";
+    location.href = "https://efur.flexan.cf/login?redirect=chat" + (location.hash != "" ? "@" + encodeURIComponent(encodeURIComponent(location.hash)) : "");
     return;
   }
   
@@ -452,7 +452,7 @@ var pages;
   if (config.isGuest()) {
     alertError("You must have a registered account to send and receive messages. Redirecting...");
     await new Promise(r => setTimeout(r, 5000));
-    location.href = "https://efur.flexan.cf/login?redirect=chat";
+    location.href = "https://efur.flexan.cf/login?redirect=chat" + (location.hash != "" ? "@" + encodeURIComponent(encodeURIComponent(location.hash)) : "");
     return;
   }
   
