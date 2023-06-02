@@ -236,6 +236,10 @@ button:disabled {
   cursor: pointer;
 }
 
+.hidden {
+  display: none !important;
+}
+
 /*
   conversation item
 */
