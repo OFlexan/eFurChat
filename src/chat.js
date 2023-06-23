@@ -275,7 +275,7 @@ async function initPage(page) {
       className: "bottom",
       reference: "input"
     }], {});
-    d.get("profile").onclick = () => location.href = "https://efur.flexan.cf/#profile@" + u.id;
+    d.get("profile").onclick = () => location.href = "https://efur.flxn.ml/#profile@" + u.id;
     d.get("html_back").onclick = () => location.hash = "conversations";
     body.classList.add("htmlHasHeader");
     d.appendTo(document.body);
@@ -451,7 +451,7 @@ var pages;
 
   // check if user is logged in
   if (Parse.User.current() == null) {
-    location.href = "https://efur.flexan.cf/login?redirect=chat" + (location.hash != "" ? "@" + encodeURIComponent(encodeURIComponent(location.hash)) : "");
+    location.href = "https://efur.flxn.ml/login?redirect=chat" + (location.hash != "" ? "@" + encodeURIComponent(encodeURIComponent(location.hash)) : "");
     return;
   }
   
@@ -459,7 +459,7 @@ var pages;
   if (config.isGuest()) {
     alertError("You must have a registered account to send and receive messages. Redirecting...");
     await new Promise(r => setTimeout(r, 5000));
-    location.href = "https://efur.flexan.cf/login?redirect=chat" + (location.hash != "" ? "@" + encodeURIComponent(encodeURIComponent(location.hash)) : "");
+    location.href = "https://efur.flxn.ml/login?redirect=chat" + (location.hash != "" ? "@" + encodeURIComponent(encodeURIComponent(location.hash)) : "");
     return;
   }
   
